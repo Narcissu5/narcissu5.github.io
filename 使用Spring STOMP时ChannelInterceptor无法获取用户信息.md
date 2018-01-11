@@ -7,21 +7,21 @@ STOMP中用户身份认证主要来自于握手的Http请求，具体来说来�
 也就是说request中的Principal会自动转到websocket中去，很好。然后我们可以利用`ChannelInterceptor`来拦截订阅请求。但这时候发现，Principal居然是`null`：
 
 ```java
-    @Override
-    public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
-        if (StompCommand.SUBSCRIBE.equals(headerAccessor.getCommand())) {
-            Principal principal = headerAccessor.getUser();
-            // principal is null here
-        }
-        return message;
+@Override
+public Message<?> preSend(Message<?> message, MessageChannel channel) {
+    StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
+    if (StompCommand.SUBSCRIBE.equals(headerAccessor.getCommand())) {
+        Principal principal = headerAccessor.getUser();
+        // principal is null here
     }
+    return message;
+}
 ```
 
 原因倒是很简单，SpringBoot的starter少了一个依赖：
 
 ```groovy
-    compile 'org.springframework.security:spring-security-messaging:4.2.2.RELEASE'
+compile 'org.springframework.security:spring-security-messaging:4.2.2.RELEASE'
 ```
 
 缺少这个库不会引发任何异常也没有任何Log，但是会使得上面的代码拿不到Principal。可以说各种AutoConfiguration还是挺容易留下这种坑的。
